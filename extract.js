@@ -4,39 +4,35 @@ var fs = require('fs');
 var path = require('path');
 var readline = require('readline');
 
-if(process.argv.length<3) {
-    console.error('\tUsage : %s filename [startOffset]', process.argv[1]);
-    process.exit(1);
-}
-
 var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     terminal: true
 });
 
-var dataFile = process.argv[2];
-var fd = undefined; //
-var start = process.argv[3] || 0, offset;
+var dataFile, fd, start = 0;
 
-rl.question('Open file ['+dataFile+']: ', function(res) {
-    res = (res||'').trim();
-    if(res) {
-        dataFile = res;
+module.exports = function(argv) {
+    if(!argv.length) {
+        return this.usage();
     }
-    fd = fs.openSync(dataFile, 'r');
-    var stat = fs.fstatSync(fd);
-    console.log('\tOpened file %s of size %d', dataFile, stat.size);
-    rl.question('Start at offset ['+(start||0).toString()+']: ', askFile);
-});
+    dataFile = argv[0];
+    start = parseInt(argv[1] || '0');
+    rl.question('Open file ['+dataFile+']: ', function(res) {
+        res = (res||'').trim();
+        if(res) {
+            dataFile = res;
+        }
+        fd = fs.openSync(dataFile, 'r');
+        var stat = fs.fstatSync(fd);
+        console.log('\tOpened file %s of size %d', dataFile, stat.size);
+        rl.question('Start at offset ['+(start||0).toString()+']: ', askFile);
+    });
+}
 
-function askFile(start) {
-    var offset = 0;
-    if(typeof start == 'number') {
-        offset = start;
-    }
-    else {
-        offset = parseInt(start.trim());
+function askFile(offset) {
+    if(typeof offset != 'number') {
+        offset = parseInt(offset.trim()) || start;
     }
     var bLength = new Buffer(4);
     fs.readSync(fd, bLength, 0, 4, offset); offset+=4;

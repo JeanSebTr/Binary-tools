@@ -1,0 +1,16 @@
+{
+  "name": "bin-tools",
+  "version": "0.0.1",
+  "author": "JeanSebTr <jeansebtr@xpensia.com>",
+  "description": "Tools for manipulating binary files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/JeanSebTr/Binary-tools.git"
+  },
+  "license": "BSD"
+}

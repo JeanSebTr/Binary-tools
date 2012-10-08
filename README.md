@@ -2,7 +2,21 @@
 
 Tools for manipulating binary files
 
-## extract.dat.js
+## Installation
+
+```sh
+npm install bin-tools -g
+```
+
+## Usage
+
+```sh
+bin-tools <command> [arguments...]
+```
+
+## Commands
+
+### extract <filename> [startOffset]
 
 Extract a .dat file in the current working directory
 

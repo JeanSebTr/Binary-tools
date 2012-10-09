@@ -4,6 +4,9 @@
   "author": "JeanSebTr <jeansebtr@xpensia.com>",
   "description": "Tools for manipulating binary files",
   "main": "index.js",
+  "dependencies": {
+    "step": "0.0.5"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

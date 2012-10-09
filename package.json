@@ -1,6 +1,6 @@
 {
   "name": "bin-tools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "JeanSebTr <jeansebtr@xpensia.com>",
   "description": "Tools for manipulating binary files",
   "main": "index.js",

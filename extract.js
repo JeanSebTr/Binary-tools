@@ -1,63 +1,50 @@
-#!/usr/bin/env node
 
 var fs = require('fs');
 var path = require('path');
-var readline = require('readline');
-
-var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: true
-});
-
-var dataFile, fd, start = 0;
 
 module.exports = function(argv) {
     if(!argv.length) {
-        return this.usage();
+        this.usage();
     }
-    dataFile = argv[0];
-    start = parseInt(argv[1] || '0');
-    rl.question('Open file ['+dataFile+']: ', function(res) {
-        res = (res||'').trim();
-        if(res) {
-            dataFile = res;
+    var filename = argv[0];
+    if(!fs.existsSync(filename)) {
+        return console.error("File %s doesn't exists!", filename);
+    }
+    var nBuf = new Buffer(4);
+    var fd = fs.openSync(filename, 'r');
+    var stat = fs.fstatSync(fd);
+    fs.readSync(fd, nBuf, 0, 4, 0);
+    var entBuf = new Buffer(nBuf.readUInt32LE(0)*4);
+    fs.readSync(fd, entBuf, 0, entBuf.length, 4);
+    var fRead = 0;
+    for(var i=0; i<entBuf.length; i+=4) {
+        var offset = entBuf.readUInt32LE(i);
+        if(offset>0) {
+            process.nextTick(readFileEntry.bind(null, filename, offset));
+            fRead++;
         }
-        fd = fs.openSync(dataFile, 'r');
-        var stat = fs.fstatSync(fd);
-        console.log('\tOpened file %s of size %d', dataFile, stat.size);
-        rl.question('Start at offset ['+(start||0).toString()+']: ', askFile);
+    }
+    console.log('Going to extract %d files from %s...', fRead, filename);
+}
+
+function readFileEntry(archive, offset) {
+    fs.open(archive, 'r', function(err, fd) {
+        // TODO cleaning + Error management ?
+        var nBuf = new Buffer(8);
+        fs.read(fd, nBuf, 0, 8, offset, function() {
+            var fLength = nBuf.readUInt32LE(0);
+            var nLength = nBuf.readUInt32LE(4);
+            nBuf = new Buffer(nLength);
+            fs.read(fd, nBuf, 0, nLength, offset+8, function() {
+                process.nextTick(extractFileEntry.bind(null, 
+                    nBuf.toString('utf8'), fd, offset+8+nLength, fLength));
+            });
+        });
     });
 }
 
-function askFile(offset) {
-    if(typeof offset != 'number') {
-        offset = parseInt(offset.trim()) || start;
-    }
-    var bLength = new Buffer(4);
-    fs.readSync(fd, bLength, 0, 4, offset); offset+=4;
-    var length = bLength.readUInt32LE(0);
-    fs.readSync(fd, bLength, 0, 4, offset); offset+=4;
-    var lName = bLength.readUInt32LE(0);
-    var bName = new Buffer(lName);
-    fs.readSync(fd, bName, 0, lName, offset); offset+=lName;
-    rl.question('Extract file '+bName.toString('utf8')+' ? [Yes]: ',
-        doExtractFile.bind(null, bName.toString('utf8'), offset, length))
-}
-
-function doExtractFile(name, offset, length, res) {
-    res = (res||'y').toLowerCase();
-    if(res[0] == 'y' || res[0] == 'o') {
-        extract_to(name, fd, offset, length);
-        fd = fs.openSync(dataFile, 'r');
-    }
-    else {
-        process.nextTick(askFile.bind(null, offset+length));
-    }
-}
-
-function extract_to(name, file, from, length) {
-    var nParts = name.split('/');
+function extractFileEntry(filename, fd, from, length) {
+    var nParts = filename.split('/');
     name = process.cwd();
     for(var i=0; i<nParts.length-1; i++) {
         name += '/'+nParts[i];
@@ -65,13 +52,13 @@ function extract_to(name, file, from, length) {
             fs.mkdirSync(name);
         }
     }
-    name += '/'+nParts[nParts.length-1];
-    var src = fs.createReadStream(undefined, {
-        fd: file,
+    var r = fs.createReadStream(null, {
+        fd: fd,
         start: from,
         end: from+length-1
     });
-    var dst = fs.createWriteStream(name);
-    src.pipe(dst);
-    src.on('end', askFile.bind(null, from+length));
+    r.pipe(fs.createWriteStream(filename, {
+        flags: 'w+'
+    }));
+    r.on('end', console.log.bind(console, '\tExtracted %s', filename));
 }

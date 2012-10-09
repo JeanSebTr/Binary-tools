@@ -25,3 +25,12 @@ Caveats :
  * Support the FTL game's .dat format
  * You must specify the offset of the first entry
 
+### search <filename> [format] <search>
+
+Formats :
+
+ * Int8
+ * 16BE
+ * 16LE
+ * 32BE
+ * 32LE

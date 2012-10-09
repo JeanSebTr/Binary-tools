@@ -11,6 +11,11 @@ var commands = {
         file: 'extract.js',
         des: 'extract .dat file (FTL game\'s format)',
         usage: '<filename> [startOffset]'
+    },
+    search: {
+        file: 'search.js',
+        des: '',
+        usage: '<filename> [format] <term>'
     }
 }
 
